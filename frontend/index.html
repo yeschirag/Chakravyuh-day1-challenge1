@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chakravyuh - The Multiverse Quest</title>
+    <!-- We still need the "Bangers" font for the title -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bangers&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Silk Background Canvas -->
+    <canvas id="silkCanvas"></canvas>
+    
+    <!-- Mystical Overlay Elements -->
+    <div class="mystical-overlay"></div>
+    <div class="magic-particles"></div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Login Screen (LEVEL 1 START) -->
+        <div id="loginScreen" class="screen active">
+            
+            <div class="login-card">
+                <!-- Header -->
+                <div class="header">
+                    <!-- Updated Logo Container -->
+                    <div class="logo-container">
+                        <img src="gdg-logo.png" 
+                             alt="GDG Logo" 
+                             class="header-logo-img"
+                             onerror="this.src='https://placehold.co/130x50/0a0a0a/ffffff?text=GDG+Logo'; this.onerror=null;">
+                        
+                        <h1>CHAKRAVYUH</h1>
+
+                    </div>
+                    <p class="subtitle">GDG IIIT Sri City - AIML Challenge</p>
+                </div>
+                
+                <!-- Form -->
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="teamId">Team ID</label>
+                        <input 
+                            type="text" 
+                            id="teamId" 
+                            placeholder="Enter your Team ID" 
+                            required
+                            autocomplete="off"
+                        >
+                        <div class="input-glow"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            placeholder="Enter your password" 
+                            required
+                            autocomplete="off"
+                        >
+                        <div class="input-glow"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">
+                        <span>ENTER THE MULTIVERSE</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                </form>
+                
+                <!-- Footer -->
+                <p class="login-footer">Authorized personnel only • GDG Challenge 2025</p>
+            </div>
+        </div>
+        
+        <!-- Riddle Screen (REVEAL & VERIFICATION PORTAL) -->
+        <div id="riddleScreen" class="screen">
+            <div class="riddle-card">
+                <!-- Top Section -->
+                <div class="riddle-header">
+                    <div class="team-info">
+                        <span class="team-label">TEAM</span>
+                        <span id="displayTeamId" class="team-id">TEAM-001</span>
+                    </div>
+                </div>
+                
+                <!-- Riddle Content -->
+                <div class="riddle-content">
+                    <div class="riddle-icon">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                            <path d="M 50 20 Q 70 35 70 50 Q 70 65 50 80 Q 30 65 30 50 Q 30 35 50 20" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="50" cy="50" r="8" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    
+                    <h2 class="riddle-title">YOUR RIDDLE AWAITS</h2>
+                    
+                    <div class="riddle-text-container">
+                        <p id="riddleText" class="riddle-text">
+                            Step by step I descend, each gradient pays the cost. Hours stand still, yet outcomes rearrange—Not magic, just models that make time strange.
+                        </p>
+                    </div>
+                    
+                </div>
+                
+                <!-- Action Section -->
+                <div class="riddle-actions">
+                    <button id="nextBtn" class="btn-primary">
+                        <span>PROCEED</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                </div>
+
+                <!-- NEW: Divider -->
+                <hr class="section-divider">
+
+                <!-- NEW: Verification Portal -->
+                <div id="verificationPortal" class="verification-portal">
+                    
+                    <h2 class="portal-title">SUBMIT FINAL ANSWER</h2>
+                    
+                    <form id="verificationForm" class="verification-form">
+                        <div class="form-group">
+                            <label for="finalAnswer">Decrypted Code</label>
+                            <input 
+                                type="text" 
+                                id="finalAnswer" 
+                                placeholder="Enter the final decrypted code" 
+                                required
+                                autocomplete="off"
+                            >
+                            <div class="input-glow"></div>
+                        </div>
+                        
+                        <button type="submit" id="submitAnswerBtn" class="btn-submit">
+                            <span>SAVE THE TIMELINE</span>
+                            <div class="btn-glow"></div>
+                        </button>
+                    </form>
+
+                    <button id="logoutBtn" class="btn-secondary">
+                        <span>EXIT</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- NEW: Success Screen -->
+        <div id="successScreen" class="screen">
+            <div class="success-card">
+                <div class="avenger-icon">
+                    <!-- 
+                      ICON UPDATED:
+                      Replaced the SVG with an <img> tag.
+                      Just change "dr-strange-icon.png" to your image file.
+                    -->
+                    <img src="dr-strange.png" 
+                         alt="Mission Complete" 
+                         class="avenger-img"
+                         onerror="this.src='https://placehold.co/100x100/e6e6e6/dc143c?text=O_O'; this.onerror=null;">
+                </div>
+                <h1 class="success-title">MISSION COMPLETE!</h1>
+                <p class="success-subtitle">
+                    Congratulations, <span id="displayTeamIdSuccess" class="success-team-id">TEAM-001</span>!
+                </p>
+                <p class="success-text">
+                    You have pieced together the Infinity Code and saved the timeline.
+                </p>
+                
+                <button id="logoutSuccessBtn" class="btn-secondary">
+                    <span>RETURN TO HQ</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Magic Elements -->
+    <div class="floating-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
+
