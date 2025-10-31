@@ -1,4 +1,10 @@
-// Silk Canvas Animation
+// --- START: API Configuration ---
+// Make sure this matches the port your Django server is running on
+const API_BASE_URL = "http://127.0.0.1:8000/api"; 
+// --- END: API Configuration ---
+
+
+// --- START: Original Canvas Animation Code (Unchanged) ---
 const canvas = document.getElementById("silkCanvas")
 const ctx = canvas.getContext("2d")
 
@@ -150,7 +156,7 @@ function drawSilkTexture() {
     }
   }
 
-  // --- START: Line Options ---
+  // --- START: Line Options (Unchanged) ---
   ctx.strokeStyle = "rgba(220, 20, 60, 0.08)"
   ctx.lineWidth = 1 // Lines are now 1px thin
   for (let i = 0; i < 5; i++) {
@@ -179,64 +185,40 @@ function animate() {
 
 // Start the animation
 animate()
+// --- END: Original Canvas Animation Code ---
 
-// --- Form Handling ---
+
+// --- START: Form Handling & Backend Logic ---
 
 // Screens
 const loginScreen = document.getElementById("loginScreen")
 const riddleScreen = document.getElementById("riddleScreen")
-const successScreen = document.getElementById("successScreen") // NEW
+const successScreen = document.getElementById("successScreen")
 
 // Login Screen
 const loginForm = document.getElementById("loginForm")
 const teamIdInput = document.getElementById("teamId")
 const passwordInput = document.getElementById("password")
+const loginButton = loginForm.querySelector('button[type="submit"]'); // Get login button
 
 // Riddle Screen
 const displayTeamId = document.getElementById("displayTeamId")
 const nextBtn = document.getElementById("nextBtn")
 const logoutBtn = document.getElementById("logoutBtn")
 
-// NEW: Verification Portal (Level 5)
+// Verification Portal
 const verificationForm = document.getElementById("verificationForm")
 const finalAnswerInput = document.getElementById("finalAnswer")
 const submitAnswerBtn = document.getElementById("submitAnswerBtn")
 
-// NEW: Success Screen
+// Success Screen
 const displayTeamIdSuccess = document.getElementById("displayTeamIdSuccess")
 const logoutSuccessBtn = document.getElementById("logoutSuccessBtn")
 
+// Global var to store the auth token
+let authToken = null;
 
-// --- Mock Riddles & Answers ---
-const riddlesPool = [
-  {
-    riddle:
-      "Step by step I descend, each gradient pays the cost. Hours stand still, yet outcomes rearrange—Not magic, just models that make time strange.",
-    lead: "AI/ML Lead",
-  },
-  {
-    riddle:
-      "I build bridges between worlds, connecting what was separate. My threads weave patterns invisible to the eye, yet felt in every interaction.",
-    lead: "Web Development Lead",
-  },
-  {
-    riddle:
-      "I guard the gates of knowledge, deciding who enters and what stays hidden. Trust is my currency, encryption my language.",
-    lead: "Security Lead",
-  },
-]
-
-// Mock answer database
-const correctAnswers = {
-    "TEAM-001": "THIS IS MARVEL",
-    "TEAM-002": "AVENGERS ASSEMBLE",
-    "DEFAULT": "THIS IS MARVEL" // Fallback for any team
-}
-
-// Global var to store logged-in team ID
-let currentTeamId = "";
-
-// --- Custom Modal ---
+// --- Custom Modal (Unchanged) ---
 function showCustomAlert(message, buttonText = "PROCEED") {
     // Check if an alert already exists
     if (document.querySelector('.custom-alert-overlay')) {
@@ -350,44 +332,123 @@ function showCustomAlert(message, buttonText = "PROCEED") {
         document.head.appendChild(styleTag);
     }
 }
+// --- END: Custom Modal ---
 
 
-// --- Event Listeners ---
+// --- START: Backend Event Listeners ---
 
 // LEVEL 1: Login
-loginForm.addEventListener("submit", (e) => {
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault()
-
-  const teamId = teamIdInput.value.trim().toUpperCase()
+  
+  const teamId = teamIdInput.value.trim().toUpperCase() // Use uppercase to match DB
   const password = passwordInput.value.trim()
 
-  if (teamId && password) {
-    currentTeamId = teamId; // Store team ID
-    
-    // Trigger screen shake
-    const loginCard = document.querySelector('.login-card');
-    loginCard.classList.add('shake');
-    setTimeout(() => { loginCard.classList.remove('shake'); }, 500);
+  if (!teamId || !password) {
+      showCustomAlert("Team ID and Password cannot be empty.", "TRY AGAIN");
+      return;
+  }
 
-    // Simulate successful login
-    displayTeamId.textContent = currentTeamId;
-    displayTeamIdSuccess.textContent = currentTeamId; // Set for success screen
+  // Show loading state
+  const loginButtonSpan = loginButton.querySelector('span');
+  const originalLoginText = loginButtonSpan.textContent;
+  loginButtonSpan.textContent = 'ENTERING...';
+  loginButton.disabled = true;
 
-    // Assign a random riddle (as per PDF)
-    const randomRiddle = riddlesPool[Math.floor(Math.random() * riddlesPool.length)]
-    document.getElementById("riddleText").textContent = randomRiddle.riddle
-    
-    // Switch screens
-    loginScreen.classList.remove("active")
-    setTimeout(() => {
-      riddleScreen.classList.add("active")
-    }, 100)
+  try {
+    const response = await fetch(`${API_BASE_URL}/login/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            username: teamId,
+            password: password,
+        }),
+    });
 
-    loginForm.reset()
+    if (response.ok) {
+        const data = await response.json();
+        authToken = data.access; // Store the JWT token
+
+        // Trigger screen shake
+        const loginCard = document.querySelector('.login-card');
+        loginCard.classList.add('shake');
+        setTimeout(() => { loginCard.classList.remove('shake'); }, 500);
+
+        // Set Team IDs on other screens
+        displayTeamId.textContent = teamId;
+        displayTeamIdSuccess.textContent = teamId;
+
+        // Fetch the assigned riddle
+        await fetchRiddle();
+
+        // Switch screens
+        loginScreen.classList.remove("active")
+        setTimeout(() => {
+            riddleScreen.classList.add("active")
+        }, 100)
+
+        loginForm.reset()
+
+    } else {
+        // Handle failed login
+        const errorData = await response.json();
+        let errorMsg = errorData.detail || "Invalid credentials. Please try again.";
+        showCustomAlert(`LOGIN FAILED\n\n${errorMsg}`, "TRY AGAIN");
+    }
+
+  } catch (error) {
+    console.error("Login error:", error);
+    showCustomAlert("NETWORK ERROR\n\nCould not connect to the server. Please check your connection.", "TRY AGAIN");
+  } finally {
+    // Restore button
+    loginButtonSpan.textContent = originalLoginText;
+    loginButton.disabled = false;
   }
 })
 
-// "PROCEED" button
+// Function to fetch the team's riddle
+async function fetchRiddle() {
+    if (!authToken) {
+        showCustomAlert("Authentication error. Please log in again.", "LOGOUT");
+        logout();
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/riddle/`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById("riddleText").textContent = data.riddle_text;
+            
+            // Check if team has already completed
+            if (data.is_complete) {
+                // Instantly move to success screen
+                riddleScreen.classList.remove("active");
+                successScreen.classList.add("active");
+            }
+
+        } else if (response.status === 404) {
+             document.getElementById("riddleText").textContent = "No riddle has been assigned to your team. Please contact an organizer.";
+        } else {
+            throw new Error('Failed to fetch riddle');
+        }
+
+    } catch (error) {
+        console.error("Fetch riddle error:", error);
+        document.getElementById("riddleText").textContent = "Error loading riddle. Please try logging out and in again.";
+    }
+}
+
+
+// "PROCEED" button (Unchanged, still shows cryptic message)
 nextBtn.addEventListener("click", () => {
   // Trigger screen shake
   const riddleCard = document.querySelector('.riddle-card');
@@ -395,48 +456,78 @@ nextBtn.addEventListener("click", () => {
   setTimeout(() => { riddleCard.classList.remove('shake'); }, 500);
 
   // Show custom alert as per PDF flow
-  // UPDATED: Made message cryptic
   showCustomAlert("Your riddle is now active. Good luck, Avenger.", "GOOD LUCK")
 })
 
 // VERIFICATION: Submit Final Answer
-verificationForm.addEventListener("submit", (e) => {
+verificationForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     
     const answer = finalAnswerInput.value.trim().toUpperCase();
     if (!answer) return;
+
+    if (!authToken) {
+        showCustomAlert("Authentication error. Please log in again.", "LOGOUT");
+        logout();
+        return;
+    }
+
+    // Show loading state
+    const originalSubmitText = submitAnswerBtn.textContent;
+    submitAnswerBtn.textContent = 'VERIFYING...';
+    submitAnswerBtn.disabled = true;
 
     // Trigger screen shake
     const riddleCard = document.querySelector('.riddle-card');
     riddleCard.classList.add('shake');
     setTimeout(() => { riddleCard.classList.remove('shake'); }, 500);
 
-    // Check answer (mocked)
-    const expectedAnswer = correctAnswers[currentTeamId] || correctAnswers["DEFAULT"];
+    try {
+        const response = await fetch(`${API_BASE_URL}/submit/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                final_answer: answer
+            })
+        });
 
-    if (answer === expectedAnswer) {
-        // CORRECT!
-        setTimeout(() => {
-            riddleScreen.classList.remove("active");
-            successScreen.classList.add("active");
-        }, 600); // Wait for shake to finish
-    } else {
-        // INCORRECT!
-        showCustomAlert("ACCESS DENIED\n\nThat is not the correct code. The timeline is in danger!", "TRY AGAIN");
+        const data = await response.json();
+
+        if (response.ok) {
+            // CORRECT!
+            setTimeout(() => {
+                riddleScreen.classList.remove("active");
+                successScreen.classList.add("active");
+            }, 600); // Wait for shake to finish
+        } else {
+            // INCORRECT!
+            let errorMsg = data.message || "ACCESS DENIED. That is not the correct code.";
+            showCustomAlert(`${errorMsg}\n\nThe timeline is in danger!`, "TRY AGAIN");
+        }
+
+    } catch (error) {
+        console.error("Submit error:", error);
+        showCustomAlert("NETWORK ERROR\n\nCould not submit answer. Please check your connection.", "TRY AGAIN");
+    } finally {
+        // Restore button
+        submitAnswerBtn.textContent = originalSubmitText;
+        submitAnswerBtn.disabled = false;
+        finalAnswerInput.value = ""; // Clear input
     }
-
-    finalAnswerInput.value = ""; // Clear input
 });
 
 
-// Logout Function
+// Logout Function (Unchanged)
 function logout() {
     riddleScreen.classList.remove("active");
     successScreen.classList.remove("active"); // Hide success screen too
     setTimeout(() => {
         loginScreen.classList.add("active");
     }, 100);
-    currentTeamId = ""; // Clear stored team
+    authToken = null; // Clear the auth token
 }
 
 // Attach logout to both buttons
@@ -444,7 +535,7 @@ logoutBtn.addEventListener("click", logout);
 logoutSuccessBtn.addEventListener("click", logout);
 
 
-// Magic particle effects on mouse move
+// Magic particle effects on mouse move (Unchanged)
 document.addEventListener("mousemove", (e) => {
   const magicParticles = document.querySelector(".magic-particles")
 
@@ -480,4 +571,5 @@ document.addEventListener("mousemove", (e) => {
     }, 30)
   }
 })
+// --- END: Form Handling & Backend Logic ---
 
